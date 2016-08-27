@@ -20,7 +20,9 @@ var input =
   }
 
   log(catcher, item_one, item_three)
-`
+`;
+
+var output = Paramour(input);
 ```
 
 ## Windows Command Line
