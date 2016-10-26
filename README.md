@@ -1,5 +1,7 @@
 # Paramour
 ## _"The perfect rendezvous with JavaScript and Python"_
+
+see my [post](https://codepen.io/Ephellon/post/paramour)
 ----
 # How to
 ## JavaScript
@@ -89,6 +91,3 @@ super_name.class_name {
   /def/g
 }};
 ```
-
-# And much more
-see my [pen](http://codepen.io/Ephellon/pen/XKPVgw)
