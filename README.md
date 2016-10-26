@@ -4,6 +4,24 @@
 see my [post](https://codepen.io/Ephellon/post/paramour)
 ----
 # How to
+## HTML
+```html
+<!-- something like... -->
+<head>
+  <script src="paramour.js"></script>
+  <script src="script.par" type="text/par"></script>
+  <!-- external scripts can be loaded -->
+</head>
+<body onload="Paramour.compile(true)">
+  <script type="text/par">
+    # extra Paramour scripts can go here too
+  </script>
+  <!--
+    more code...
+  -->
+</body>
+```
+
 ## JavaScript
 ```js
 var input =
