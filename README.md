@@ -51,18 +51,18 @@ public static void main(String args[]) {
 ----
 # Awesome Features of Paramour
 ### Functions
-```javascript
+```paramour
 function_name(parameter) {
-  // ...
+  # ...
 }
 
-// Or
-/* Special Types
+# Or
+### Special Types
    *   - Any
    ... - Spread
-*/
+###
 function_name(Type parameter) {
-  // ...
+  # ...
 }
 ```
 
@@ -71,14 +71,14 @@ function_name(Type parameter) {
 class_name {
   <init>(arguments) {
     # constructor
-    ...
+    # ...
   }
 }
 
 super_name.class_name {
   <init> {
     # optional arguments
-    ...
+    # ...
   }
 }
 ```
