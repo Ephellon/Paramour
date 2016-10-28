@@ -33,7 +33,7 @@ var input =
     log("This is Paramour!")
   }
 
-  (catcher, item_one, item_two, item_three) = {{123, "abc", /def/g}};
+  var(catcher, item_one, item_two, item_three) = {{123, "abc", /def/g}};
 
   log(String message, ... extra) {
     console.log(message, extra)
@@ -111,4 +111,4 @@ super_name.class_name {
 ```
 
 # And much more!
-see [this](https://codepen.io/Ephellon/pen/XKPVgw)
+see [this](http://paramour-minkcbos.codeanyapp.com)
