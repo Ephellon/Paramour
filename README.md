@@ -111,4 +111,4 @@ var variable_name = {{
 ```
 
 # And much more!
-see [this](https://Ephellon/github.io/Paramour/)
+see [this](https://Ephellon.github.io/Paramour/)
