@@ -33,7 +33,7 @@ var input =
     log("This is Paramour!")
   }
 
-  var(catcher, item_one, item_two, item_three) = {{123, "abc", /def/g}};
+  var(catcher, item_one, item_two, item_three) = .{123, "abc", /def/g};
 
   log(String message, ... extra) {
     console.log(message, extra)
