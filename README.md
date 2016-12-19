@@ -29,9 +29,8 @@ var input =
   # Paramour
   # $doc -> document
 
-  $doc.body.onload = () {
-    log("This is Paramour!")
-  }
+  $doc.body.onload = () =>
+    log "This is Paramour!";
 
   var(catcher, item_one, item_two, item_three) = .{123, "abc", /def/g};
 
