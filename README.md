@@ -103,11 +103,11 @@ super_name.class_name {
 
 ### Tuples
 ```javascript
-var variable_name = {{
+var variable_name = .{
   123,
   "abc",
   /def/g
-}};
+};
 ```
 
 # And much more!
