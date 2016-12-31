@@ -75,8 +75,9 @@ function_name(parameter) {
 
 # Or
 ### Special Types
-   *   - Any
-   ... - Spread
+   *         - Any
+   ...       - Spread
+   <Element> - HTML Element
 ###
 function_name(Type parameter) {
   # ...
