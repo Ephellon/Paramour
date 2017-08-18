@@ -1,0 +1,158 @@
+### Paramour 28.0.0
+  author: Ephellon Dantzler
+  date: Fri Aug 5, 2016
+  time: 21:00 CST -06:00
+  license: "MIT"
+###
+
+# Version Emulation
+# @1.5
+
+# Phantoms (like "$1, \2, etc." in RegExp)
+# $con -> console
+# $win => window
+
+# Tuples & MVSV Declaration (Multiple Variables, Same Value)
+var(catcher, value_1) = .{
+  "abc", 123, /def/g, [1..10]
+};
+
+var(value_2, value_3) = Tuple.next;
+
+### Results:
+  catcher - the Tuple itself
+  value_1 - "abc"
+  value_2 - 123
+  value_3 - /def/g
+###
+
+var value_4 = catcher.next();
+  # value_4 - [123, 456, 789]
+
+# RegExps & Quasis
+properNo(number) =>
+///
+  ^\(?(\d{3})\)? # area code, ignore optional parens
+  [-\s]?(\d{3})  # prefix, ignore optional dash or space
+  -?(\d{4})      # line-number, ignore optional dash
+///.test number;
+
+# Functions & DocStrings
+/** (String message, String details..., Number error)
+ * logs a message and it's details
+ * @param {String} message The message to log
+ * @param {Spread of Strings} details The arguments that are considered extra "string" details
+ * @param {Number} error The error number
+ */
+log(String message, String details..., Number error) =>
+  console.log(message, details, error);
+
+/** (String message, details...)
+ * logs a message and it's details
+ * @param {String} message The message to log
+ * @param {Spread} details The arguments that are considered extra details
+ */
+log(String message, details...) =>
+  $con.log message;
+
+/** (String message)
+ * logs a message
+ * @param {String} message The message to log
+ */
+log(String message) {
+  var begin = message[0];
+  switch(begin) {
+    case("a", "e", "i", "o", "u") {
+      $con.log "The message begins with a vowel: ${message}"
+    }
+    case[0..9]
+      $con.log "The message begins with a number: ${message}";
+    default(".", "!", "?") {
+      $con.log "The message either begins with puncutation, or a consonant: ${message}"
+    }
+  }
+}
+
+# Classes
+Employee {
+  <init>(data = {}) {
+    for(var entry in data)
+      @[entry] = data[entry];
+  }
+
+  .call() {
+    if(defined(@number) && properNo(@number))
+      alert "Calling @name, ${@number}";
+  }
+
+  .pull(entry) {
+    -> @[entry]
+  }
+
+  .push(data) {
+    for(var entry in data)
+      @[entry] = data[entry];
+  }
+
+  .remove(entry) {
+    -> @[entry] = undefined,
+       undefined (@[entry])
+  }
+}
+
+Employee Manager {
+  <init>(data = {}) {
+    for(var entry in data)
+      @[entry] = data[entry];
+    @role = "Manager"
+  }
+
+  .remove(entries...) {
+    for(var x = 0; x < entries.length; x++)
+      super entries[x];
+  }
+}
+
+var Bob = *Employee({
+  name: "Bob Dylan"
+  age:  41
+  role: "Cashier"
+});
+
+### Custom Operators
+ These behave as a sort-of "get" for operators
+ custom operators can take up to 4 spaces
+ ! up to ====, for a grand total of 50,611 (15^4 - 7) possible operators
+ ! ~ * / % + - < > & ^ | ? : =
+
+ reserved:
+ ~ >
+ + >
+ - >
+ / *
+ * /
+ / /
+ = >
+###
+
+[Number ^ Number] =>
+  Math.pow($1, $2);
+
+[Number = Number] =>
+  $1 === $2;
+
+[Boolean?] {
+  if($1)
+    -> $1;
+  else
+    +> SyntaxError "? Operator was given 'false'";
+}
+
+[!Any] =>
+  undefined $1;
+
+# also accepts name => ()
+if(
+  => (((2^2) = 4)?)
+)
+  $con.log "Why, hello";
