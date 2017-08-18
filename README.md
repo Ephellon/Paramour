@@ -1,7 +1,5 @@
 # Paramour
 ## _"The perfect rendezvous with JavaScript and Python"_
-
-see my [post](https://codepen.io/Ephellon/post/paramour)
 ----
 # How to
 ## HTML
