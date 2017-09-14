@@ -85,14 +85,14 @@ function_name(Type parameter) {
 ### Classes
 ```python
 class_name {
-  <init>(arguments) {
+  init::(arguments...) {
     # constructor
     # ...
   }
 }
 
 super_name.class_name {
-  <init> {
+  init::{
     # optional arguments
     # ...
   }
@@ -102,8 +102,8 @@ super_name.class_name {
 ### Tuples
 ```javascript
 var variable_name = .{
-  123,
-  "abc",
+  123
+  "abc"
   /def/g
 };
 ```
