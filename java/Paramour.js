@@ -201,7 +201,7 @@ function Paramour(input, options) {
         "SU": (!native?
               /#\s*?(\s?@(?:strict|mini|deps|embed|native))/:
               /\/\/\s*?(\s?@(?:strict|mini|deps|embed|native))/), // # @option
-        "DL": /(\$(?:[_'&`+]|[1-9]\d?))/,  // $1 ... $99
+        "DL": /(\$(?:[_'&`+]))/,  // $_ $' $& $` $+
         "Dq": /("""(?:[^\\]|\\.)*?""")/, // """..."""
         "Sq": /('''(?:[^\\]|\\.)*?''')/, // '''...'''
         "Tq": /(```(?:[^\\]|\\.)*?```)/, // ```...```
@@ -1140,7 +1140,7 @@ Is a Spread?
 
       y.push(undol(args[x]
             .replace(/\$/g, "$$")
-            .replace(/\bthis\b/, "$" + (x + 1))
+            .replace(/\bthis\b/, "$$" + (x + 1))
 
             // .reserved = value
             .replace(RegExp("^\\s*\\." + q + "\\s*(?:\\=\\s*([^\\=].*))?$"), function(__, _1, _2) {
@@ -1177,11 +1177,11 @@ Is a Spread?
   // get rid of everything before starting Paramour
   // String: String[, String[, (Array|String)]]
   function fold(string, type, pattern_array) {
-    if(type == undefined)
+    if(type == undefined || type == null)
       type = global_expressions;
     else if(typeof type == "string")
       type = type.split(/\s|,/);
-    if(pattern_array == undefined)
+    if(pattern_array == undefined || pattern_array == null)
       pattern_array = (__patterns__[type] == undefined)? patterns: __patterns__;
     for(var pattern in pattern_array) {
       if(RegExp(type.join("|")).test(pattern)) {
@@ -1205,10 +1205,6 @@ Is a Spread?
       string = string.replace(k, function($_, $1) {
         return "\b0" + (stand_alone && !/\d/.test($1)? "X": "x") + $1.charCodeAt(0).toString(16) + "\b"
       });
-    for(k = /([\$\\])([_'&`+]|[1-9]\d*)/; k.test(string);)
-      string = string.replace(k, function($_, $1, $2) {
-        return $1 == "$" && /\W/.test($2)? fold('["' + $1 + $2 + '"]'): "\b" + $1 + "\b" + $2 + "\b"
-      });
     return string
   }
 
@@ -1224,9 +1220,14 @@ Is a Spread?
     return string
   }
 
+  // String: String[, Boolean]
+  function undol(string, more) {
+    return string.replace(/([^\w\$])\$([_'&`+]|[1-9]\d?)/g, "$1$$" + (more? "$$": "") + "$2");
+  }
+
   for(var pattern in patterns)
-    if(global_expressions.indexOf(pattern.replace(/!/, "")) == -1)
-      global_expressions.push(pattern.replace(/!/, ""));
+    if(global_expressions.indexOf(pattern) < 0)
+      global_expressions.push(pattern);
 
   // Create the kids for the Phantom Object
   PN.kids = [];
@@ -1406,7 +1407,7 @@ Is a Spread?
 
   // String: String, Number
   function handle(type, index) {
-    var spill = undol(native_types[type][index] || ""), k;
+    var spill = undol(native_types[type][index] || "", true), k;
 
     function handle_interpolation(string, symbol, could_contain_double_quote, to_single_quote) {
       if(to_single_quote) string = string
@@ -1455,7 +1456,7 @@ Is a Spread?
         if(r.test(spill))
           PN.kids.push((o[R[0].replace(/[\b]/g, "")] = unfold(R[1]), o));
         else if(s.test(spill))
-          PN.kids.push((o[S[0].replace(/[\b]/g, "")] = eval(unshock( unfold(unfold(S[1]), "IG ST") ).replace(/[\b]/g, "")), o));
+          PN.kids.push((o[S[0].replace(/[\b]/g, "")] = eval(unshock( unstaple(S[1], unfold, unignore) ).replace(/[\b]/g, "")), o));
         return '\b/\b/\b ' + spill + '\b';
         break;
       case 'SL':
@@ -1522,6 +1523,7 @@ Is a Spread?
     (expressions.constructor == Array)?
       expressions:
     expressions.split(" ");
+
     for(var expression = R("(" + expressions.join("|") + ")\\.(\\d+)"); expression.test(string) && max > 0; --max)
       string = string.replace(expression, handle(R.$1, +R.$2));
 
@@ -1531,12 +1533,28 @@ Is a Spread?
     else
       for(var expression = R("(" + expressions.join("|") + ")\\.(\\d+)"); expression.test(string) && max > 0; --max)
         string = string.replace(expression, handle(R.$1, +R.$2));
-    return string
+
+    return string;
   }
 
-  // String: String
-  function undol(string) {
-    return string.replace(/([^\w\$])\$([_'&`+]|[1-9]\d?)/g, "$1$$$2");
+  // String: String[, Boolean]
+  function unstaple(string, handler, callback, nopass) {
+    for(var k = /ST\.(\d+)/, l = ST.length, i = 0; k.test(string) && i < l; i++)
+      string = (handler? handler(string): string).replace(k, function($_, $1) {
+        return ST[+$1]
+      });
+
+    return (k.test(string)? unstaple(string, handler, callback): callback? callback(string, nopass? undefined: handler): string);
+  }
+
+  // String: String[, Boolean]
+  function unignore(string, handler, callback, nopass) {
+    for(var k = /IG\.(\d+)/, l = IG.length, i = 0; k.test(string) && i < l; i++)
+      string = (handler? handler(string): string).replace(k, function($_, $1) {
+        return IG[+$1]
+      });
+
+    return string = (k.test(string)? unignore(string, handler, callback): callback? callback(string, nopass? undefined: handler): string);
   }
 
   // String: String
@@ -1648,7 +1666,7 @@ Is a Spread?
       if(paren == undefined) return "";
       for(var k = /@|\bthis\b/, j = 1, paren = paren || ""; k.test(paren);)
         paren = paren.replace(k, function() {
-          return undol("$" + j++)
+          return "$" + j++
         });
       return paren;
     };
@@ -1917,11 +1935,11 @@ Is a Spread?
         "(" + Argify_In_Paren($6).replace(Type_Name_RegExp, "$2").replace(t, "$1") + ")\b " + $7));
       },
       "([\\=\\-\\~\\+\\&])?arrow\\?=\\[([^\\[\\]]*)\\]\\s*\\[([^\\[\\]]*)\\]\\z*(BE\\.\\d+|\\Q+)": function($_, $1, $2, $3, $4) {
-        // HELP: console.log($_, [$1, $2, $3, $2], [$1, $2, unfold($3), unfold($4)]); // :HELP
+        // HELP: console.log(unfold($_), [$1, $2, $3, $4]); // :HELP
         $1 = ($1 || "").replace("=", "-");
         $2 = ($2 || "").replace(/[\b]/g, "").replace(/([a-z\$_][\w\$]*)\s*$/i, "$1");
 
-        var d = strip(unfold($3, "PR")), n = "", f = ((/[\=\:]/.test($2))? (n = "function\b ", ""): "function\b "),
+        var d = strip(unfold($3, "PR")), n = "", f = ((/[\=\:]/.test($3))? (n = "function\b ", ""): "function\b "),
             A, B, D, E, t = Register_in_Pusher.ending_error_regexp, u = Register_in_Pusher.equals_regexp, v = /\s*[\=\:]\s*/, w = v.test($2), x = "", y, l;
 
         // HELP: console.log("Native[" + $1 + ">]:", [$2, $3, $4]); // :HELP
@@ -2031,7 +2049,7 @@ Is a Spread?
           if($4 == "")
             return ignore($_);
           else
-            $5 = fold("{" + $4 + ">\b " + undol("\b" + $5) + "}");
+            $5 = fold("{" + $4 + ">\b " + $5 + "}");
 
         if(!symbol_operator.test($3) && !word_operator.test($3))
           return fold($1 + $2 + " [" + $3 + "]," + newline + $1 + "  " + $4 + $5);
@@ -2080,7 +2098,7 @@ Is a Spread?
           " " + $5;
         Operator($2, g, d, unfold(f, 'PR'), $5, (n || $2));
 
-        return $1 + compile(f);
+        return $1 + f;
       },
       // JS-Unit
       "([\\b]*DS[\\.#]\\d+[\\b]*\\z*)?@(After|Before)\\z*(BE\\.\\d+)": function($_, $1, $2, $3) {
@@ -2097,11 +2115,12 @@ Is a Spread?
       // arrow functions
       "([\\.\\:\\=]\\s*)?(\\*?\\j\\z*[\\:\\=]?\\z*)?(PR\\.\\d+)${arrow_state}\\z*(BE\\.\\d+|\\Q+)": function($0, $1, $2, $3, $4, $5, $$, $_) {
         // .\j = (...) => {...}
-        var _1 = "", _2 = "", _3, _4, R = RegExp;
+        var _1 = "", _2 = "", _3, _4, _5, R = RegExp;
         $1 = $1 || "";
         $2 = $2 || "";
         $3 = unfold($3, "PR");
         $4 = $4.replace("=", "-");
+        _5 = /^\./.test($1);
 
         // HELP: console.log("Native Arrow[function]:", unfold($0), [$1, $2, $3, $4, $5], $$, $_); // :HELP
         // if((Paramour.NativeTypeFN[$2] != Paramour.SubTypeFN[$2] && Paramour.NativeTypeFN != undefined) || Should_Register($3))
@@ -2121,9 +2140,11 @@ Is a Spread?
           $0 = R.$_, $2 = (R.$1 || ""), $3 = R.$2, $5 = R.$3;
         }
         _3 = strip(unfold($3, 'PR')).replace(/\(+/g, " ").replace(/\)+/g, "");
-        _4 = (/[\:\=]/.test($2)? "": " = ");
-        return "\b" + $1 + ((runtime.has("1.6") && !type_regexp.test(_3) && !type_spread_regexp.test(_3))?
+        _4 = (/[\:\=]/.test($2) || _5? "": " = ");
+        return "\b" + $1 + (((runtime.has("1.6") && !type_regexp.test(_3) && !type_spread_regexp.test(_3)))?
           $2 + _4 + "(" + _3 + ") => " + $5 + _2:
+        (_5)?
+          compile("." + $2 + _4 + "(" + _3 + ") => " + $5 + _2):
         compile("\b" + $4 + "arrow?=[" + $2 + "] [" + $3 + "] " + $5) + _2)
       },
       "(\\s*)(\\.)?(\\j\\z*)?\\s*([~\\*%\\/\\+\\-\\^\\?\\:]|[\\!\\&\\|\\=]{1,2}|[<>]{1,3})?\\s*\\=>\\z*(${operators_regexp}+)?\\s*(PR\\.\\d+)(\\Q*)\\s*(${operators_regexp}+)?": function($_, $1, $2, $3, $4, $5, $6, $7, $8) {
@@ -2301,25 +2322,25 @@ Is a Spread?
           fold($1.replace(RegExp.$2, "undefined")) + " != typeof\b " + $2:
         fold($1) + " == typeof\b " + $2
       },
-      "\\b((un)?defined|null)\\s*(\\l+)": function($_, $1, $2, $3, $4) {
-      return shock((($2 == "un" || $1 == "null")?
+      "\\b((un)?defined|null)\\s+(\\j\\l+|\\$[1-9]\\d?)": function($_, $1, $2, $3, $4) {
+        return shock((($2 == "un" || $1 == "null")?
+          (strict)?
+            "\\(" + $3 + " == " + $1 + "\\)":
+          "\\(" + $3 + " == undefined || " + $3 + " == null\\)":
         (strict)?
-          "\\(" + $3 + " == " + $1 + "\\)":
-        "\\(" + $3 + " == undefined || " + $3 + " == null\\)":
-      (strict)?
-        "\\(" + $3 + " != " + $1 + "\\)":
-      "\\(" + $3 + " != undefined && " + $3 + " != null\\)"), true)
-    },
-    "\\bNaN(\\s+|\\s*[\\!\\=]\\={1,2}\\s*)([\\+\\-]{0,2}\\l+|\\l+[\\+\\-]{2}?)": function($_, $1, $2) {
-      var isNaN;
-      return $1.replace(/[\=\s]+/g, "").replace(/^!/, "\\!") +
-        ((isNaN)? "isNaN(" + $2 + ")": fold(shock("\\!(" + $2 + " <= Infinity\\)", true)))
-    },
-    "([\\+\\-]{0,2}\\l+|\\l+[\\+\\-]{2}?)\\s*([\\!\\=]?\\={1,2})\\s*NaN": function($_, $1, $2) {
-      var isNaN;
-      return $1.replace(/[\=\s]+/g, "").replace(/^!/, "\\!") +
-        ((isNaN)? "isNaN(" + $1 + ")": fold(shock("\\!(" + $1 + " <= Infinity\\)", true)))
-    },
+          "\\(" + $3 + " != " + $1 + "\\)":
+        "\\(" + $3 + " != undefined && " + $3 + " != null\\)"), true)
+      },
+      "\\bNaN(\\s+|\\s*[\\!\\=]\\={1,2}\\s*)([\\+\\-]{0,2}\\l+|\\l+[\\+\\-]{2}?)": function($_, $1, $2) {
+        var isNaN;
+        return $1.replace(/[\=\s]+/g, "").replace(/^!/, "\\!") +
+          ((isNaN)? "isNaN(" + $2 + ")": fold(shock("\\!(" + $2 + " <= Infinity\\)", true)))
+      },
+      "([\\+\\-]{0,2}\\l+|\\l+[\\+\\-]{2}?)\\s*([\\!\\=]?\\={1,2})\\s*NaN": function($_, $1, $2) {
+        var isNaN;
+        return $1.replace(/[\=\s]+/g, "").replace(/^!/, "\\!") +
+          ((isNaN)? "isNaN(" + $1 + ")": fold(shock("\\!(" + $1 + " <= Infinity\\)", true)))
+      },
       // variables
       "\\b(var|const|let)\\z*(PR\\.\\d+)(\\z*[\\:\\=]\\Q+)?": function($_, $1, $2, $3) {
         var c, s, d;
@@ -2455,7 +2476,7 @@ Is a Spread?
 
         return unfold($1).replace($2, "") + "(" + $4 + " " + $5 + compile(unfold($6).replace($7, "")) + ")"
       },
-      "(\\j\\#?|\\N)(\\s+)(\\j(?:\\.\\d+)?|\\N)(\\.{3})?": function($_, $1, $2, $3, $4, $5) {
+      "(\\j\\#?|\\N)(\\s+)(\\j\\l+)(\\.{3})?": function($_, $1, $2, $3, $4, $5) {
         var o, p, r = RTS.p, s = RTS.s, l = Operator.kids, w;
         $2 = $2 || "";
         $5 = ($5 || "");
@@ -2512,7 +2533,7 @@ Is a Spread?
         )
           self = Patterns[pattern],
           self.name = pattern,
-          string = undol(P(string).replace(self.pattern = self.regexp = reg, self));
+          string = P(string).replace(self.pattern = self.regexp = reg, self);
 
         if(compile.counts >= 1000)
           Throw(new RangeError(), "[String -> String]:" + (index | 0) + "$1\tat /" + self.name + "/", "Maximum call stack size exceeded [" + (+(new Date) - compile.start) + " ms].");
@@ -2557,11 +2578,8 @@ Is a Spread?
   input = unfold(input);
   input = unshock(input);
   // console.log("End brain #3");
-  
-  for(var k = /IG\.(\d+)/, l = IG.length, i = 0; k.test(input) && i < l; i++)
-    input = input.replace(k, function($_, $1) {
-      return IG[+$1]
-    });
+
+  input = unignore(input);
 
   // scope independent
   if(runtime.has("1.6"))
@@ -2576,21 +2594,11 @@ Is a Spread?
     .replace(RegExp("(" + reserved.source + "[\\x20\\t\\v\\u0008 ]+)\\*", "g"), "$1new\b ")
     .replace(/\bfunction[\b\s]+new[\b\s]+/g, "function *");
 
-  input = unfold(input);
-
-  for(k = /ST\.(\d+)/, l = ST.length, i = 0; k.test(input) && i < l; i++)
-    input = input.replace(k, function($_, $1) {
-      return ST[+$1]
-    });
+  input = unstaple(input, unfold);
 
   StampTime(input, "Replacing complete. Replace <Phantoms>");
 
   input = PN.replace(input);
-
-  for(k = /ST\.(\d+)/, l = ST.length, i = 0; k.test(input) && i < l; i++)
-    input = input.replace(k, function($_, $1) {
-      return ST[+$1]
-    });
 
   StampTime(input, "Replacing complete. Handle <Native-Typed-Functions>");
 
@@ -2617,13 +2625,13 @@ Is a Spread?
   // DS
   var q = {
     "DS\\?=(\\d+)((?:\\z|[\\b])*\\j(?:[\\.\\w]+)?)((?:\\z|[\\b])+\\j(?:[\\.\\w]+)?)": function($_, $1, $2, $3) {
-      return "(\"" + unfold(DS[+$1]).replace(/"/g, "\\\"").split(newline.toRegExp()).join(newline.esc + "\" +" + newline.unesc + "\"") + "\").setDocString(" + $3.replace(/\s/g, "") + ");" + newline + $2 + $3
+      return "(\"" + unstaple(unfold(DS[+$1]), unfold, unignore).replace(/"/g, "\\\"").split(newline.toRegExp()).join(newline.esc + "\" +" + newline.unesc + "\"") + "\").setDocString(" + $3.replace(/\s/g, "") + ");" + newline + $2 + $3
     },
     "DS\\?=(\\d+)((?:\\z|[\\b])*\\j(?:[\\.\\w]+)?)": function($_, $1, $2) {
-      return "(\"" + unfold(DS[+$1]).replace(/"/g, "\\\"").split(newline.toRegExp()).join(newline.esc + "\" +" + newline.unesc + "\"") + "\").setDocString(" + $2.replace(/\s/g, "") + ");" + newline + $2
+      return "(\"" + unstaple(unfold(DS[+$1]), unfold, unignore).replace(/"/g, "\\\"").split(newline.toRegExp()).join(newline.esc + "\" +" + newline.unesc + "\"") + "\").setDocString(" + $2.replace(/\s/g, "") + ");" + newline + $2
     },
     "DS\\?=(\\d+)": function($_, $1) {
-      return "(\"" + unfold(DS[+$1]).replace(/"/g, "\\\"").split(newline.toRegExp()).join(newline.esc + "\" +" + newline.unesc + "\"") + "\")"
+      return "(\"" + unstaple(unfold(DS[+$1]), unfold, unignore).replace(/"/g, "\\\"").split(newline.toRegExp()).join(newline.esc + "\" +" + newline.unesc + "\"") + "\")"
     }
   };
 
