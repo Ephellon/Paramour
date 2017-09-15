@@ -114,7 +114,7 @@ function Paramour(input, options) {
       strict    = options.strict,
       native    = options.native,
       condition = /[\&\|~]|[<>]=?|[!=]={1,2}/, // & | ~ < <= > >= != !== == ===
-      number    = /\b([-+]?(?:0b[01]+|0o[0-7]+|0x[\da-f]+|(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+\.?\d*)?))\b/i, // numbers
+      number    = /([-+]?(?:0b[01]+|0o[0-7]+|0x[\da-f]+|(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+\.?\d*)?))\b/i, // numbers
       tabs      = false, // should the doublespaces be replaced with tabs?
       RTS       = {p: "prefix-", m: "media-", s: "suffix-", P: "Prefix_", M: "Media_", S: "Suffix_"},
       reserved  = /(\b(?:abstract|boolean|break|byte|ca(?:se|tch)|char|class|con(?:st|tinue)|de(?:bugger|fault|lete)|do(?:uble)?|else|enum|eval|ex(?:port|tends)|false|final(?:ly)?|float|for|function|goto|i[fn]|imp(?:lements|ort)|int(?:erface)?|long|native|new|null|package|pr(?:ivate|otected)|public|return|short|static|super|switch|synchronized|this|throws?|tr(?:ansient|ue|y)|(?:instance|type)?of|(?:un)?defined|var|vo(?:id|latile)|while|with|yield|[gsl]et|self)\b|(?:\binit\:\:|@|[\-\+\~\&]>))/,
@@ -1455,7 +1455,7 @@ Is a Spread?
         if(r.test(spill))
           PN.kids.push((o[R[0].replace(/[\b]/g, "")] = unfold(R[1]), o));
         else if(s.test(spill))
-          PN.kids.push((o[S[0].replace(/[\b]/g, "")] = eval(unshock(unfold(S[1])).replace(/[\b]/g, "")), o));
+          PN.kids.push((o[S[0].replace(/[\b]/g, "")] = eval(unshock( unfold(unfold(S[1]), "IG ST") ).replace(/[\b]/g, "")), o));
         return '\b/\b/\b ' + spill + '\b';
         break;
       case 'SL':
