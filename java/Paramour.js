@@ -979,7 +979,7 @@ function Paramour(input, options) {
     string = string.replace(locket, head +
       "\\type-fn() {\t" +
       "  var index = 0, args = arguments, types = Types.apply(null, arguments).split(','), check = Types.check, oftype = Types.oftype;\t" +
-      "\t  switch(types + '') {\t" + tail);
+      "  switch(types + '') {\t" + tail);
 
     var k = /\s*([@a-zA-Z_\$][\w\$]*)\.apply\b/, i = 0, m = [], L = l = Paramour[type];
 
@@ -2305,7 +2305,7 @@ Is a Spread?
       "\\&>": function($_) {
         return "yield\b"
       },
-      "\\b((?:[DST][Qq]|QI|ST)\\.\\d+)\\s*(\\j)\\s*([\\=\\:])\\s*(\\Q+)((\\s*\\:)\\s*\\Q+)?": function($_, $1, $2, $3, $4, $5, $6) {
+      "\\b((?:[DST][Qq]|QI|ST)\\.\\d+)\\s*(\\j\\l*)\\s*([\\=\\:])\\s*(\\Q+)((\\s*\\:)\\s*\\Q+)?": function($_, $1, $2, $3, $4, $5, $6) {
         var d = runtime.has("1.4") && strict,
             q = (/\.\d+/.test($1) && !d? ".name": ""),
             r = ($5 == undefined? " undefined": $5.replace($6, "")),
@@ -2315,14 +2315,14 @@ Is a Spread?
           return $2 + " = ((" + $2 + " = " + $4 + ")" + c + q + " == " + $1 + ")? " + $2 + ":" + r;
         return $2 + ": ((Global['." + $2 + "'] = " + $4 + ")" + c + q + " == " + $1 + ")? Global['." + $2 + "']:" + r;
       },
-      "\\b((?:[DST][Qq]|QI|ST)\\.\\d+)\\s*(\\j)": function($_, $1, $2) {
+      "\\b((?:[DST][Qq]|QI|ST)\\.\\d+)\\s*(\\j\\l*)": function($_, $1, $2) {
         if(!/^(["'`]|["'`]{3})(boolean|function|null|number|object|string|symbol|(?:un)?defined)\1$/.test($1 = unfold($1, "DQ SQ QI Dq Sq Tq")))
           return $1 + " + " + $2;
         return (RegExp.$2 == "defined")?
           fold($1.replace(RegExp.$2, "undefined")) + " != typeof\b " + $2:
         fold($1) + " == typeof\b " + $2
       },
-      "\\b((un)?defined|null)\\s+(\\j\\l+|\\$[1-9]\\d?)": function($_, $1, $2, $3, $4) {
+      "\\b((un)?defined|null)\\s+(\\l+)": function($_, $1, $2, $3, $4) {
         return shock((($2 == "un" || $1 == "null")?
           (strict)?
             "\\(" + $3 + " == " + $1 + "\\)":
@@ -2433,7 +2433,7 @@ Is a Spread?
         if(i.length < 1)
           i = $2;
         return ignore(fold(
-          $1 + h + (l[0] + ((i.length > 3)? newline + i.join(g).replace(/(\s*)$/, newline + "$1"): i.join(g)) + l[1])
+          $1 + h + (l[0] + ((i.length > 3)? i.join(g).replace(/(\s*)$/, newline + "$1"): i.join(g)) + l[1])
           .replace(/,([\s\b]*(?:VC|ML|DS|EM|PN|SL)\.\d+[\b]*)?\s*[\)\]\}]$/,
                   "$1" + (i.length > 1? newline + g.slice(2, g.length): "") + l[1])
           .replace(/([\:\{\[\(]\s*),\s*/g, "$1")
@@ -3042,7 +3042,10 @@ Is a Spread?
     input = input.replace(/(^\s*?)[\x20 ]{2}/g, "$1\t");
 
   input = unshock(input);
-  input = input.replace(errors, "").replace(/\.+[\b\s]*([\(\[\{\}\]\)])/g, "$1");
+  input = input
+    .replace(errors, "")
+    .replace(/\.+[\b\s]*([\(\[\{\}\]\)])/g, "$1")
+    .replace(/(\bfunction)(\s+)([a-zA-Z\$_][\w\$]*)(\s*[\=\:])/g, "$3$4$2$1");
   input = input.replace(/[\b]*#SEA-REPORT#[\b]*/, Paramour.report);
 
   StampTime(input, "Handling complete. Return results");
